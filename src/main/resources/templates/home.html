@@ -1,6 +1,6 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
-      layout:decorator="layout.html">
+      layout:decorate="~{layout.html}">
 <div layout:fragment="content">
     <div class="store" th:if="${isStoreEnabled}">
         <h1 class="f1">Store</h1>
