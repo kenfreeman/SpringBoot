@@ -1,7 +1,13 @@
 package com.actifio.springBoot;
 
+import com.actifio.springBoot.queue.QueueService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.jms.annotation.JmsListenerConfigurer;
+import org.springframework.jms.config.JmsListenerEndpointRegistrar;
+import org.springframework.jms.config.SimpleJmsListenerEndpoint;
 
 /**
  * Copyright (c) 2020 Actifio Inc. All Rights Reserved
@@ -17,8 +23,20 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * =============================================================
  */
 @SpringBootApplication
-public class SpringBoot
+public class SpringBoot implements JmsListenerConfigurer
 {
+    @Value("${queue.name}")
+    private String queueName;
+
+    @Value("${worker.name}")
+    private String workerName;
+
+    @Value("${worker.enabled}")
+    private boolean workerEnabled;
+
+    @Autowired
+    private QueueService queueService;
+
     private String[] args;
     private static final String PORT_PROPERTY = "server.port";
     @SuppressWarnings("FieldCanBeLocal")
@@ -43,5 +61,16 @@ public class SpringBoot
         SpringApplication.run(this.getClass(), args);
         System.out.println("Web server is running on port " + port);
         connected = true;
+    }
+
+    @Override
+    public void configureJmsListeners(JmsListenerEndpointRegistrar registrar) {
+        if (workerEnabled) {
+            SimpleJmsListenerEndpoint endpoint = new SimpleJmsListenerEndpoint();
+            endpoint.setId(workerName);
+            endpoint.setDestination(queueName);
+            endpoint.setMessageListener(queueService);
+            registrar.registerEndpoint(endpoint);
+        }
     }
 }
