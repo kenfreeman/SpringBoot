@@ -9,6 +9,9 @@ import org.springframework.jms.annotation.JmsListenerConfigurer;
 import org.springframework.jms.config.JmsListenerEndpointRegistrar;
 import org.springframework.jms.config.SimpleJmsListenerEndpoint;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+
 /**
  * Copyright (c) 2020 Actifio Inc. All Rights Reserved
  * <p/>
@@ -34,6 +37,21 @@ public class SpringBoot implements JmsListenerConfigurer
     @Value("${worker.enabled}")
     private boolean workerEnabled;
 
+    @Value("${dbConnection.ipAddress}")
+    private String dbConnectionIpAddress;
+
+    @Value("${dbConnection.database}")
+    private String dbConnectionDatabase;
+
+    @Value("${dbConnection.port}")
+    private Integer dbConnectionPort;
+
+    @Value("${dbConnection.user}")
+    private String dbConnectionUser;
+
+    @Value("${dbConnection.password}")
+    private String dbConnectionPassword;
+
     @Autowired
     private QueueService queueService;
 
@@ -41,6 +59,7 @@ public class SpringBoot implements JmsListenerConfigurer
     private static final String PORT_PROPERTY = "server.port";
     @SuppressWarnings("FieldCanBeLocal")
     private static boolean connected = false;
+    private static ThreadLocal<Connection> connection = new ThreadLocal<>();
 
     public SpringBoot() {
     }
@@ -49,13 +68,26 @@ public class SpringBoot implements JmsListenerConfigurer
         this.args = args;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         System.setProperty(PORT_PROPERTY, "8888");
         new SpringBoot(args).run();
     }
 
-    private void run()
+    public Connection getConnection() throws Exception
     {
+        Connection connectionThisThread = connection.get();
+
+        if (connectionThisThread == null || connectionThisThread.isClosed())
+        {
+            final String url = "jdbc:postgresql://" + dbConnectionIpAddress + ":" + dbConnectionPort + "/" + dbConnectionDatabase;
+            System.out.println("Connecting to " + url + " as " + dbConnectionUser);
+            connectionThisThread = DriverManager.getConnection(url, dbConnectionUser, dbConnectionPassword);
+            connection.set(connectionThisThread);
+        }
+        return connectionThisThread;
+    }
+
+    private void run() {
         String port = System.getProperty(PORT_PROPERTY);
 
         SpringApplication.run(this.getClass(), args);
@@ -71,6 +103,12 @@ public class SpringBoot implements JmsListenerConfigurer
             endpoint.setDestination(queueName);
             endpoint.setMessageListener(queueService);
             registrar.registerEndpoint(endpoint);
+        }
+        try {
+            getConnection();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

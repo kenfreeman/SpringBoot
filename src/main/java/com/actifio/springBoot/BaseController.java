@@ -59,7 +59,8 @@ public class BaseController
         model.addAttribute("queueName", this.queueName);
         model.addAttribute("workerName", this.workerName);
         model.addAttribute("isStoreEnabled", this.storeEnabled);
-        model.addAttribute("isWorkerEnabled", this.workerEnabled);
+        // model.addAttribute("isWorkerEnabled", this.workerEnabled);
+        model.addAttribute("isWorkerEnabled", Boolean.TRUE);
         return "home";
     }
 

@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: kenfreeman/spring-boot
+          imagePullPolicy: Always
+          env:
+            - name: ACTIVEMQ_BROKER_URL
+              value: "tcp://queue:61616"
+            - name: STORE_ENABLED
+              value: "true"
+            - name: WORKER_ENABLED
+              value: "false"
+          ports:
+            - containerPort: 8888
+          livenessProbe:
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            httpGet:
+              path: /health
+              port: 8888
+          resources:
+            limits:
+              memory: 512Mi

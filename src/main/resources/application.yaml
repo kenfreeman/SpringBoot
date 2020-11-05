@@ -9,3 +9,9 @@ worker:
   enabled: ${WORKER_ENABLED:true}
 store:
   enabled: ${STORE_ENABLED:true}
+dbConnection:
+  ipAddress: ${DB_IP_ADDRESS:104.197.15.242}
+  database: ${DB_NAME:postgres}
+  port: ${DB_PORT:5432}
+  user: ${DB_USER:postgres}
+  password: ${DB_PASSWORD:password}
